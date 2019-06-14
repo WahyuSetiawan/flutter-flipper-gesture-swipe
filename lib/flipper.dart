@@ -326,47 +326,51 @@ class FlipPanelState<T> extends State<FlipPanel> with TickerProviderStateMixin {
   }
 
   void _handleDragEnd(DragEndDetails details) {
-    _controller = AnimationController(
-        duration: Duration(milliseconds: 200), vsync: this)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          if (angleChange > (math.pi / 2)) {
+    _controller =
+        AnimationController(duration: Duration(milliseconds: 200), vsync: this)
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              if (angleChange > (math.pi / 2)) {
+                setState(() {
+                  int _currentIndextmp = _currentIndex;
+
+                  if (_flipDirection.toString() ==
+                      FlipDirection.down.toString()) {
+                    _currentIndextmp = _currentIndextmp - 1;
+                  } else {
+                    _currentIndextmp = _currentIndextmp + 1;
+                  }
+
+                  if (_currentIndextmp >= widget.items.length) {
+                    _currentIndextmp = 0;
+                  }
+
+                  if (_currentIndextmp < 0) {
+                    _currentIndextmp = widget.items.length - 1;
+                  }
+
+                  _currentIndex = _currentIndextmp;
+                });
+              } else {}
+
+              setState(() {
+                angleChange = _zeroAngle;
+                _running = false;
+                _dragging = false;
+                _startDrag = 0;
+                _flipDirection = null;
+              });
+            }
+          })
+          ..addListener(() {
             setState(() {
-              if (_currentIndex + 1 >= widget.items.length &&
-                  _flipDirection.toString() == FlipDirection.up.toString()) {
-                _currentIndex = 0;
-              } else if (_currentIndex - 1 < 0 &&
-                  _flipDirection.toString() == FlipDirection.down.toString()) {
-                _currentIndex = widget.items.length - 1;
-              } else {
-                if (_flipDirection.toString() ==
-                    FlipDirection.down.toString()) {
-                  _currentIndex = _currentIndex - 1;
-                } else {
-                  _currentIndex = _currentIndex + 1;
-                }
+              try {
+                angleChange = _animation.value;
+              } catch (e) {
+                angleChange = _zeroAngle;
               }
             });
-          } else {}
-
-          setState(() {
-            angleChange = _zeroAngle;
-            _running = false;
-            _dragging = false;
-            _startDrag = 0;
-            _flipDirection = null;
           });
-        }
-      })
-      ..addListener(() {
-        setState(() {
-          try {
-            angleChange = _animation.value;
-          } catch (e) {
-            angleChange = _zeroAngle;
-          }
-        });
-      });
 
     _animation = Tween(
             begin: angleChange, end: (angleChange > math.pi / 2) ? math.pi : 0)
