@@ -117,7 +117,7 @@ class FlipPanelState<T> extends State<FlipPanel> {
       _lowerNext = makeLowerClip(widget.indexedItemBuilder(context, 0));
     }
 
-    if (_currentIndex - 1 >= 1) {
+    if (_currentIndex - 1 >= 0) {
       _upperPrevious =
           makeUpperClip(widget.indexedItemBuilder(context, _currentIndex - 1));
       _lowerPrevious =
@@ -272,14 +272,20 @@ class FlipPanelState<T> extends State<FlipPanel> {
     setState(() {
       if (angleChange > (math.pi / 2)) {
         if (_currentIndex + 1 >= widget.items.length &&
-            _flipDirection == FlipDirection.up) {
+            _flipDirection.toString() == FlipDirection.up.toString()) {
           _currentIndex = 0;
         } else if (_currentIndex - 1 < 0 &&
-            _flipDirection == FlipDirection.down) {
+            _flipDirection.toString() == FlipDirection.down.toString()) {
           _currentIndex = widget.items.length - 1;
         } else {
-          _currentIndex = _currentIndex + 1;
+          if (_flipDirection.toString() == FlipDirection.down.toString()) {
+            _currentIndex = _currentIndex - 1;
+          } else {
+            _currentIndex = _currentIndex + 1;
+          }
         }
+
+        print("index : $_currentIndex ${_flipDirection.toString()}");
       } else {
         print("batal pindah");
       }
@@ -321,8 +327,6 @@ class FlipPanelState<T> extends State<FlipPanel> {
         if (angleChangetmp < math.pi) {
           angleChange = angleChangetmp;
         }
-
-        print(_matrixXfromBelow);
       }
     });
   }

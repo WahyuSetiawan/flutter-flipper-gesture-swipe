@@ -36,23 +36,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // double height = MediaQuery.of(context).size.height -
+    //     MediaQuery.of(context).padding.top -
+    //     MediaQuery.of(context).padding.bottom;
+
     double height = MediaQuery.of(context).size.height -
         MediaQuery.of(context).padding.top -
         MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      body: FlipPanel.builder(
-        height: height,
-        items: images,
-        itemBuilder: (context, index) {
-          return Container(
-            height: height,
-            decoration: BoxDecoration(
-                image: DecorationImage(
-                    image: AssetImage(images[index]), fit: BoxFit.cover)),
-          );
-        },
-      ),
-    );
+        body: Container(
+            margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+            child: FlipPanel.builder(
+                height: height,
+                items: images,
+                itemBuilder: (context, index) {
+                  return Container(
+                    height: height,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: AssetImage(images[index]),
+                            fit: BoxFit.cover)),
+                  );
+                })));
   }
 }
