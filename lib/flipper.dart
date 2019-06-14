@@ -38,7 +38,7 @@ class FlipPanel<T> extends StatefulWidget {
   }
 }
 
-class FlipPanelState<T> extends State<FlipPanel> {
+class FlipPanelState<T> extends State<FlipPanel> with TickerProviderStateMixin {
   AnimationController _controller;
   Animation _animation;
   int _currentIndex;
@@ -61,6 +61,7 @@ class FlipPanelState<T> extends State<FlipPanel> {
 
   Widget _upperPrevious, _upperNext;
   Widget _lowerPrevious, _lowerNext;
+  Widget _containerOpacityStart, _containerOpacityEnd;
 
   @override
   void initState() {
@@ -128,6 +129,58 @@ class FlipPanelState<T> extends State<FlipPanel> {
       _lowerPrevious = makeLowerClip(
           widget.indexedItemBuilder(context, widget.items.length - 1));
     }
+
+    double _areaOpacity = math.pi / 4;
+    double _maxOpacity = 0.9;
+
+    _containerOpacityStart = Positioned(
+      top: 0,
+      right: 0,
+      left: 0,
+      bottom: 0,
+      child: Container(
+        decoration: BoxDecoration(
+            color: Colors.black.withOpacity((angleChange < _areaOpacity)
+                ? (math.pow((angleChange / _areaOpacity), 2) >= 1)
+                    ? _maxOpacity
+                    : (_maxOpacity -
+                        (math.pow((angleChange / _areaOpacity), 2) *
+                            _maxOpacity))
+                : 0.0)),
+      ),
+    );
+
+    print(((math.pow(
+                ((angleChange - (math.pi - _areaOpacity)) / _areaOpacity), 2) /
+            _areaOpacity) *
+        _maxOpacity));
+
+    _containerOpacityEnd = Positioned(
+      top: 0,
+      right: 0,
+      left: 0,
+      bottom: 0,
+      child: Container(
+        decoration: BoxDecoration(
+            color: Colors.black.withOpacity((angleChange >
+                    (math.pi - _areaOpacity))
+                ? ((((math.pow(
+                                    ((angleChange - (math.pi - _areaOpacity)) /
+                                        _areaOpacity),
+                                    2) /
+                                _areaOpacity) *
+                            _maxOpacity) <
+                        1.0))
+                    ? ((math.pow(
+                                ((angleChange - (math.pi - _areaOpacity)) /
+                                    _areaOpacity),
+                                2) /
+                            _areaOpacity) *
+                        _maxOpacity)
+                    : _maxOpacity
+                : 0.0)),
+      ),
+    );
   }
 
   Widget _buildUpperFlipPanel() {
@@ -141,10 +194,11 @@ class FlipPanelState<T> extends State<FlipPanel> {
                   ..rotateX(_zeroAngle),
                 child: _upperChild,
               ),
+              _containerOpacityEnd,
               Transform(
                 alignment: Alignment.bottomCenter,
                 transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.001)
+                  ..setEntry(2, 2, 0.001)
                   ..rotateX(
                       ((math.pi / 2) < angleChange && angleChange < math.pi)
                           ? ((math.pi / 2) - (angleChange - (math.pi / 2)))
@@ -162,10 +216,11 @@ class FlipPanelState<T> extends State<FlipPanel> {
                   ..rotateX(_zeroAngle),
                 child: _upperPrevious,
               ),
+              _containerOpacityStart,
               Transform(
                 alignment: Alignment.bottomCenter,
                 transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.001)
+                  ..setEntry(2, 2, 0.001)
                   ..rotateX(
                       (angleChange < math.pi / 2) ? angleChange : math.pi / 2),
                 child: _upperChild,
@@ -181,14 +236,15 @@ class FlipPanelState<T> extends State<FlipPanel> {
               Transform(
                 alignment: Alignment.topCenter,
                 transform: Matrix4.identity()
-                  ..setEntry(3, 2, _perspective)
+                  ..setEntry(2, 2, _perspective)
                   ..rotateX(_zeroAngle),
                 child: _lowerNext,
               ),
+              _containerOpacityStart,
               Transform(
                 alignment: Alignment.topCenter,
                 transform: Matrix4.identity()
-                  ..setEntry(3, 2, _perspective)
+                  ..setEntry(2, 2, _perspective)
                   ..rotateX(
                       (angleChange < math.pi / 2) ? -angleChange : math.pi / 2),
                 child: _lowerChild,
@@ -200,14 +256,15 @@ class FlipPanelState<T> extends State<FlipPanel> {
               Transform(
                 alignment: Alignment.topCenter,
                 transform: Matrix4.identity()
-                  ..setEntry(3, 2, _perspective)
+                  ..setEntry(2, 2, _perspective)
                   ..rotateX(_zeroAngle),
                 child: _lowerChild,
               ),
+              _containerOpacityEnd,
               Transform(
                 alignment: Alignment.topCenter,
                 transform: Matrix4.identity()
-                  ..setEntry(3, 2, _perspective)
+                  ..setEntry(2, 2, _perspective)
                   ..rotateX(
                       ((math.pi / 2) < angleChange && angleChange < math.pi)
                           ? ((math.pi / 2) - (angleChange - (math.pi / 2))) * -1
@@ -241,7 +298,7 @@ class FlipPanelState<T> extends State<FlipPanel> {
       ],
     );
 
-    Widget mainView = true
+    Widget mainView = _running
         ? Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -269,33 +326,53 @@ class FlipPanelState<T> extends State<FlipPanel> {
   }
 
   void _handleDragEnd(DragEndDetails details) {
-    setState(() {
-      if (angleChange > (math.pi / 2)) {
-        if (_currentIndex + 1 >= widget.items.length &&
-            _flipDirection.toString() == FlipDirection.up.toString()) {
-          _currentIndex = 0;
-        } else if (_currentIndex - 1 < 0 &&
-            _flipDirection.toString() == FlipDirection.down.toString()) {
-          _currentIndex = widget.items.length - 1;
-        } else {
-          if (_flipDirection.toString() == FlipDirection.down.toString()) {
-            _currentIndex = _currentIndex - 1;
-          } else {
-            _currentIndex = _currentIndex + 1;
-          }
+    _controller = AnimationController(
+        duration: Duration(milliseconds: 200), vsync: this)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          if (angleChange > (math.pi / 2)) {
+            setState(() {
+              if (_currentIndex + 1 >= widget.items.length &&
+                  _flipDirection.toString() == FlipDirection.up.toString()) {
+                _currentIndex = 0;
+              } else if (_currentIndex - 1 < 0 &&
+                  _flipDirection.toString() == FlipDirection.down.toString()) {
+                _currentIndex = widget.items.length - 1;
+              } else {
+                if (_flipDirection.toString() ==
+                    FlipDirection.down.toString()) {
+                  _currentIndex = _currentIndex - 1;
+                } else {
+                  _currentIndex = _currentIndex + 1;
+                }
+              }
+            });
+          } else {}
+
+          setState(() {
+            angleChange = _zeroAngle;
+            _running = false;
+            _dragging = false;
+            _startDrag = 0;
+            _flipDirection = null;
+          });
         }
+      })
+      ..addListener(() {
+        setState(() {
+          try {
+            angleChange = _animation.value;
+          } catch (e) {
+            angleChange = _zeroAngle;
+          }
+        });
+      });
 
-        print("index : $_currentIndex ${_flipDirection.toString()}");
-      } else {
-        print("batal pindah");
-      }
+    _animation = Tween(
+            begin: angleChange, end: (angleChange > math.pi / 2) ? math.pi : 0)
+        .animate(_controller);
 
-      angleChange = _zeroAngle;
-      _running = false;
-      _dragging = false;
-      _startDrag = 0;
-      _flipDirection = null;
-    });
+    _controller.forward();
   }
 
   void _handleDragUpdate(DragUpdateDetails details) {

@@ -46,7 +46,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
         body: Container(
-            margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+            margin: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top,
+            ),
             child: FlipPanel.builder(
                 height: height,
                 items: images,
