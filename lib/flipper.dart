@@ -323,6 +323,8 @@ class FlipPanelState<T> extends State<FlipPanel> with TickerProviderStateMixin {
     _dragging = true;
     _startDrag = details.globalPosition.dy;
     _flipDirection = null;
+
+    _controller.stop();
   }
 
   void _handleDragEnd(DragEndDetails details) {
